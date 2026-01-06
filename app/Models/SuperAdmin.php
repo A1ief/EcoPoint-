@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class SuperAdmin extends Model
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    protected $table = 'users';
-    protected $primaryKey = 'id_user';
+    protected $table = 'super_admins';
+    protected $primaryKey = 'id_superadmin';
 
     /**
      * The attributes that are mass assignable.
@@ -20,12 +21,12 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
+        'id_user',
+        'id_sampah',
+        'id_admin',
         'nama',
-        'email',
-        'alamat',
         'password',
-        'role',
-        'is_active'
+        'email',
     ];
 
     /**
@@ -49,26 +50,18 @@ class User extends Authenticatable
     ];
 
     /**
+     * Relasi ke tb_user
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
+
+    /**
      * Relasi ke tb_sampah
      */
     public function sampah()
     {
-        return $this->hasMany(Sampah::class, 'id_user', 'id_user');
-    }
-
-    /**
-     * Relasi ke tb_poin
-     */
-    public function poin()
-    {
-        return $this->hasMany(Point::class, 'id_user', 'id_user');
-    }
-
-    /**
-     * Relasi ke tb_superadmin
-     */
-    public function superadmin()
-    {
-        return $this->hasMany(SuperAdmin::class, 'id_user', 'id_user');
+        return $this->belongsTo(Sampah::class, 'id_sampah', 'id_sampah');
     }
 }
