@@ -17,6 +17,7 @@ use App\Http\Controllers\API\SuperadminController;
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/login/{id}', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'loginAdmin']);
 
 // Protected routes - Semua authenticated users
@@ -38,8 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->group(function () {
     // Manage all sampah
     Route::get('sampah', [SampahController::class, 'index']);
+    Route::post('sampah', [SampahController::class, 'store']);
     Route::get('sampah/{id}', [SampahController::class, 'show']);
-    Route::put('sampah/{id}', [SampahController::class, 'update']);
+    Route::post('sampah/{id}', [SampahController::class, 'update']);
     Route::delete('sampah/{id}', [SampahController::class, 'destroy']);
     Route::get('sampah/user/{id_user}', [SampahController::class, 'getByUser']);
     
