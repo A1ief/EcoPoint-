@@ -29,8 +29,8 @@ class PointController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id_user' => 'required|exists:tb_user,id_user',
-            'id_sampah' => 'required|exists:tb_sampah,id_sampah',
+            'id_user' => 'required|exists:users,id_user',
+            'id_sampah' => 'required|exists:sampahs,id_sampah',
             'status' => 'required|in:pending,approved,rejected',
             'berat' => 'required|integer|min:1',
             'aksi' => 'nullable|string',
@@ -89,8 +89,8 @@ class PointController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'id_user' => 'sometimes|required|exists:tb_user,id_user',
-            'id_sampah' => 'sometimes|required|exists:tb_sampah,id_sampah',
+            'id_user' => 'sometimes|required|exists:users,id_user',
+            'id_sampah' => 'sometimes|required|exists:sampahs,id_sampah',
             'status' => 'sometimes|required|in:pending,approved,rejected',
             'berat' => 'sometimes|required|integer|min:1',
             'aksi' => 'nullable|string',

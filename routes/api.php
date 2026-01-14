@@ -49,7 +49,7 @@ Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->group(function () 
     Route::get('poin', [PointController::class, 'index']);
     Route::get('poin/{id}', [PointController::class, 'show']);
     Route::post('poin', [PointController::class, 'store']);
-    Route::put('poin/{id}', [PointController::class, 'update']);
+    Route::post('poin/{id}', [PointController::class, 'update']);
     Route::delete('poin/{id}', [PointController::class, 'destroy']);
     Route::get('poin/user/{id_user}', [PointController::class, 'getByUser']);
     Route::get('poin/total/{id_user}', [PointController::class, 'getTotalByUser']);
