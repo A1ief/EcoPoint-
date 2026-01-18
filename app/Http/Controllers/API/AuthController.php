@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -24,14 +25,9 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'nama'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email',
-            'alamat'   => 'required|string',
-            'password' => 'required|min:6|confirmed',
-        ]);
+        $validator = $request->validated();
 
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
@@ -71,13 +67,6 @@ class AuthController extends Controller
             ], 401);
         }
 
-        if (is_null($user->email_verified_at)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Email belum diverifikasi. Silakan verifikasi terlebih dahulu.'
-            ], 403);
-        }
-
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -99,8 +88,12 @@ class AuthController extends Controller
 
         Log::info('User logged out', ['user_id' => $userId]);
 
-        return redirect()->route('login')->with('success', 'Logout berhasil');
+        return response()->json([
+            'status' => true,
+            'message' => 'Logout berhasil!'
+        ], 200);
     }
+
 
     public function loginApi(Request $request)
     {
@@ -112,7 +105,7 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
@@ -122,7 +115,7 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Invalid credentials'
             ], 401);
         }
@@ -130,7 +123,7 @@ class AuthController extends Controller
         // Check if user is active
         if (!$user->is_active) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Your account has been deactivated'
             ], 403);
         }
@@ -138,8 +131,8 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'success' => true,
-            'message' => 'Login successful',
+            'status' => true,
+            'message' => 'Login status',
             'data' => [
                 'user' => $user,
                 'role' => $user->role,
@@ -160,7 +153,7 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validasi gagal',
                 'errors'  => $validator->errors()
             ], 422);
@@ -178,7 +171,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Registrasi berhasil',
             'data'    => [
                 'user'  => $user,
@@ -192,7 +185,7 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Logout berhasil'
         ]);
     }

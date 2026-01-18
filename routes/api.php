@@ -16,8 +16,8 @@ use App\Http\Controllers\API\SuperadminController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'registerApi']);
-Route::post('/login', [AuthController::class, 'loginApi']);
-Route::get('/login/{id}', [AuthController::class, 'loginApi']);
+Route::post('/login', [AuthController::class, 'login']);
+// Route::get('/login/{id}', [AuthController::class, 'loginApi']);
 // Route::post('/admin/login', [AuthController::class, 'loginAdmin']);
 
 // Protected routes - Semua authenticated users
