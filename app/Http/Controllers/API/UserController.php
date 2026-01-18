@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -49,6 +50,8 @@ class UserController extends Controller
             'email' => $request->email,
             'alamat' => $request->alamat,
             'password' => Hash::make($request->password),
+            'role' => 'user', // Default role
+            'is_active' => true, // Default active
         ]);
 
         return response()->json([

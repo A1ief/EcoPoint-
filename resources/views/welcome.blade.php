@@ -265,24 +265,6 @@
         </div>
     </section>
 
-    <!-- Wave Divider (Enhanced) -->
-    <div class="wave-container -mt-1">
-        <svg class="w-full h-24 md:h-32" viewBox="0 0 1440 320" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="wave-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:rgba(16, 185, 129, 0.1);stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:rgba(5, 150, 105, 0.1);stop-opacity:1" />
-                </linearGradient>
-            </defs>
-            <!-- Wave 1 (Bottom layer) -->
-            <path fill="url(#wave-gradient)" d="M0,160L48,170.7C96,181,192,203,288,208C384,213,480,203,576,181.3C672,160,768,128,864,128C960,128,1056,160,1152,165.3C1248,171,1344,149,1392,138.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-            <!-- Wave 2 (Middle layer) -->
-            <path fill="rgba(16, 185, 129, 0.3)" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,213.3C672,224,768,224,864,208C960,192,1056,160,1152,154.7C1248,149,1344,171,1392,181.3L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" class="wave-animation"></path>
-            <!-- Wave 3 (Top layer) -->
-            <path fill="#ffffff" d="M0,256L48,261.3C96,267,192,277,288,272C384,267,480,245,576,234.7C672,224,768,224,864,234.7C960,245,1056,267,1152,261.3C1248,256,1344,224,1392,208L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-        </svg>
-    </div>
-
     <!-- About Section -->
     <section id="profil" class="py-24 px-6 bg-gradient-to-b from-white to-green-50">
         <div class="max-w-6xl mx-auto">
@@ -356,7 +338,7 @@
     </section>
 
     <!-- How It Works Section -->
-    <section class="py-20 px-6 bg-white">
+    <section class="py-20 px-6 bg-white" id="cara-kerja">
         <div class="max-w-6xl mx-auto">
             <h2 class="text-4xl md:text-5xl font-bold text-green-600 text-center mb-16">Cara Kerja</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-12">

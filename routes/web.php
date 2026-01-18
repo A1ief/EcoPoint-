@@ -1,34 +1,44 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\API\AuthController;
 
+// PUBLIC ROUTES
 Route::get('/', function () {
     return view('welcome');
+})->name('welcome');
+
+// Authentication routes
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
+
+// PROTECTED ROUTES (harus login)
+Route::middleware(['auth'])->group(function () {
+    // Dashboard - gunakan path yang berbeda
+    Route::get('/dashboard', function () {
+        return view('dashboard.index');
+    })->name('dashboard');
+    
+    // User management
+    Route::resource('users', UserController::class);
+    Route::prefix('users')->group(function () {
+    Route::get('{id}/edit-password', [UserController::class, 'editPassword'])->name('users.edit-password');
+    Route::put('{id}/update-password', [UserController::class, 'updatePassword'])->name('users.update-password');
+    });
+    
+    // For superadmin only
+    Route::middleware(['role:superadmin'])->prefix('superadmin')->name('superadmin.')->group(function () {
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+    Route::get('users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::get('users/{id}', [UserController::class, 'show'])->name('users.show');
+
+    });
 });
 
-// Route::get('/login', function () {
-//     return view('auth.login');
-// })->name('login');
-
-// Route::get('/register', function () {
-//     return view('auth.register');
-// })->name('register');
-
-// // Dashboard Pages (protected by middleware)
-// Route::middleware(['auth:sanctum'])->group(function () {
-    
-//     // User Dashboard
-//     Route::get('/dashboard-user', function () {
-//         return view('dashboard-user');
-//     })->name('dashboard.user');
-    
-//     // Admin Dashboard
-//     Route::get('/dashboard-admin', function () {
-//         return view('dashboard-admin');
-//     })->name('dashboard.admin');
-    
-//     // SuperAdmin Dashboard
-//     Route::get('/dashboard-superadmin', function () {
-//         return view('dashboard-superadmin');
-//     })->name('dashboard.superadmin');
-// });
+// routes/web.php
+Route::get('/test-api', [UserController::class, 'testConnection']);

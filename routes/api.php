@@ -15,15 +15,15 @@ use App\Http\Controllers\API\SuperadminController;
 */
 
 // Public routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/login/{id}', [AuthController::class, 'login']);
-Route::post('/admin/login', [AuthController::class, 'loginAdmin']);
+Route::post('/register', [AuthController::class, 'registerApi']);
+Route::post('/login', [AuthController::class, 'loginApi']);
+Route::get('/login/{id}', [AuthController::class, 'loginApi']);
+// Route::post('/admin/login', [AuthController::class, 'loginAdmin']);
 
 // Protected routes - Semua authenticated users
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout', [AuthController::class, 'logoutApi']);
     Route::get('/profile', [AuthController::class, 'profile']);
     
     // User dapat melihat sampah mereka sendiri
@@ -78,15 +78,6 @@ Route::middleware(['auth:sanctum', 'role:superadmin'])->group(function () {
     
     // Superadmin management
     Route::apiResource('superadmin', SuperadminController::class);
-});
-
-// Health check
-Route::get('/health', function () {
-    return response()->json([
-        'success' => true,
-        'message' => 'API is running',
-        'timestamp' => now()
-    ]);
 });
 
 // Get all users by role (admin & superadmin only)
