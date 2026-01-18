@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -51,52 +52,41 @@ class AuthController extends Controller
 
         Log::info('User registered and logged in', ['user_id' => $user->id]);
 
-        return redirect()->route('dashboard')->with('success', 'Registrasi berhasil!');
+        return response()->json([
+            'status' => true,
+            'message' => 'Registrasi berhasil!',
+            'data' => $user
+        ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email'    => 'required|email',
-            'password' => 'required',
-        ]);
+        $credentials = $request->validated();
+        $user = User::where('email', $credentials['email'])->first();
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email atau password salah.'
+            ], 401);
         }
 
-        $credentials = $request->only('email', 'password');
-        $remember = $request->has('remember');
-
-        Log::info('Login attempt', ['email' => $credentials['email']]);
-
-        if (Auth::attempt($credentials, $remember)) {
-            // Regenerate session untuk keamanan
-            $request->session()->regenerate();
-
-            $user = Auth::user();
-
-            Log::info('User logged in', ['user_id' => $user->id, 'email' => $user->email, 'role' => $user->role]);
-
-            if (!$user->is_active) {
-                Auth::logout();
-                $request->session()->invalidate();
-                Log::warning('Inactive user tried to login', ['user_id' => $user->id]);
-                return back()->withErrors(['email' => 'Akun Anda tidak aktif'])->withInput();
-            }
-
-            $redirectRoute = match ($user->role) {
-                default => 'dashboard',
-            };
-
-            Log::info('Redirecting to dashboard', ['route' => $redirectRoute]);
-
-            return redirect()->route($redirectRoute)->with('success', 'Login berhasil!');
+        if (is_null($user->email_verified_at)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Email belum diverifikasi. Silakan verifikasi terlebih dahulu.'
+            ], 403);
         }
 
-        Log::warning('Login failed - invalid', ['email' => $request->email]);
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-        return back()->withErrors(['email' => 'Email atau password salah'])->withInput();
+        return response()->json([
+            'status' => true,
+            'message' => 'Login berhasil!',
+            'data' => $user,
+            'token' => $token,
+            'role' => $user->role,
+        ], 200);
     }
 
     public function logout(Request $request)
