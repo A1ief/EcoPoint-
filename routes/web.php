@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\TestController;
 
 // PUBLIC ROUTES
 Route::get('/', function () {
@@ -42,3 +43,9 @@ Route::middleware(['auth'])->group(function () {
 
 // routes/web.php
 Route::get('/test-api', [UserController::class, 'testConnection']);
+
+Route::get('/rubbish', [TestController::class, 'rubbish'])->name('rubbish');
+Route::get('/rubbishCreate', [TestController::class, 'rubbishCreate'])->name('rubbishCreate');
+Route::get('/rubbishEdit', [TestController::class, 'rubbishEdit'])->name('rubbishEdit');
+Route::get('/point', [TestController::class, 'point'])->name('point');
+Route::get('/pointCreate', [TestController::class, 'pointCreate'])->name('pointCreate');
