@@ -29,10 +29,6 @@ class AuthController extends Controller
     {
         $validator = $request->validated();
 
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
         $user = User::create([
             'nama'      => $request->nama,
             'email'     => $request->email,
@@ -142,22 +138,9 @@ class AuthController extends Controller
         ], 200);
     }
 
-    public function registerApi(Request $request)
+    public function registerApi(RegisterRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'nama'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email',
-            'alamat'   => 'required|string',
-            'password' => 'required|min:6',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validasi gagal',
-                'errors'  => $validator->errors()
-            ], 422);
-        }
+        $validator = $request->validated();
 
         $user = User::create([
             'nama'      => $request->nama,
