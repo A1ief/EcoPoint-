@@ -2,59 +2,94 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Http\Controllers\Controller;
 use App\Models\Point;
+use App\Models\User;
+use App\Models\Sampah;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 
 class PointController extends Controller
 {
     /**
-     * Display a listing of poin (Admin/SuperAdmin only).
+     * Display a listing of poin transactions.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $poin = Point::with(['user', 'sampah'])->get();
+        $query = Point::with(['user', 'sampah'])
+            ->filter([
+                'search' => $request->search,
+                'status' => $request->status,
+                'id_user' => $request->id_user
+            ]);
+
+        // Calculate totals
+        $totalPoints = $query->count();
+        $totalBerat = $query->sum('berat');
+        $totalPoin = $query->sum('point');
+
+        // Paginate results
+        $perPage = $request->per_page ?? 10;
+        $poins = $query->latest()->paginate($perPage);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Poin retrieved successfully',
-            'data' => $poin
+            'status' => true,
+            'message' => 'Poin transactions retrieved successfully',
+            'data' => $poins->items(),
+            'meta' => [
+                'current_page' => $poins->currentPage(),
+                'total' => $poins->total(),
+                'per_page' => $poins->perPage(),
+                'total_pages' => $poins->lastPage(),
+                'total_points' => $totalPoints,
+                'total_berat' => $totalBerat,
+                'total_poin' => $totalPoin
+            ]
         ], 200);
     }
 
     /**
-     * Store a newly created poin.
+     * Store a newly created poin transaction.
      */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id_user' => 'required|exists:users,id_user',
-            'id_sampah' => 'required|exists:sampahs,id_sampah',
-            'status' => 'required|in:pending,approved,rejected',
-            'berat' => 'required|integer|min:1',
-            'aksi' => 'nullable|string',
+            'id_user' => 'required|exists:tb_user,id_user',
+            'id_sampah' => 'required|exists:tb_sampah,id_sampah',
+            'berat' => 'required|numeric|min:0.1',
+            'deskripsi' => 'required|string|max:255',
+            'point' => 'required|integer|min:0'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        $poin = Point::create($request->all());
+        $poin = Point::create([
+            'id_user' => $request->id_user,
+            'id_sampah' => $request->id_sampah,
+            'status' => 'pending', // Default status
+            'berat' => $request->berat,
+            'deskripsi' => $request->deskripsi,
+            'point' => $request->point
+        ]);
+
+        // Load relationships
+        $poin->load(['user', 'sampah']);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Poin created successfully',
+            'status' => true,
+            'message' => 'Poin transaction created successfully',
             'data' => $poin
         ], 201);
     }
 
     /**
-     * Display the specified poin.
+     * Display the specified poin transaction.
      */
     public function show($id)
     {
@@ -62,20 +97,20 @@ class PointController extends Controller
 
         if (!$poin) {
             return response()->json([
-                'success' => false,
-                'message' => 'Poin not found'
+                'status' => false,
+                'message' => 'Poin transaction not found'
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Poin retrieved successfully',
+            'status' => true,
+            'message' => 'Poin transaction retrieved successfully',
             'data' => $poin
         ], 200);
     }
 
     /**
-     * Update the specified poin.
+     * Update the specified poin transaction.
      */
     public function update(Request $request, $id)
     {
@@ -83,38 +118,40 @@ class PointController extends Controller
 
         if (!$poin) {
             return response()->json([
-                'success' => false,
-                'message' => 'Poin not found'
+                'status' => false,
+                'message' => 'Poin transaction not found'
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
-            'id_user' => 'sometimes|required|exists:users,id_user',
-            'id_sampah' => 'sometimes|required|exists:sampahs,id_sampah',
+            'id_user' => 'sometimes|required|exists:tb_user,id_user',
+            'id_sampah' => 'sometimes|required|exists:tb_sampah,id_sampah',
             'status' => 'sometimes|required|in:pending,approved,rejected',
-            'berat' => 'sometimes|required|integer|min:1',
-            'aksi' => 'nullable|string',
+            'berat' => 'sometimes|required|numeric|min:0.1',
+            'deskripsi' => 'sometimes|required|string|max:255',
+            'point' => 'sometimes|required|integer|min:0'
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
         }
 
         $poin->update($request->all());
+        $poin->load(['user', 'sampah']);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Poin updated successfully',
+            'status' => true,
+            'message' => 'Poin transaction updated successfully',
             'data' => $poin
         ], 200);
     }
 
     /**
-     * Remove the specified poin.
+     * Remove the specified poin transaction.
      */
     public function destroy($id)
     {
@@ -122,146 +159,97 @@ class PointController extends Controller
 
         if (!$poin) {
             return response()->json([
-                'success' => false,
-                'message' => 'Poin not found'
+                'status' => false,
+                'message' => 'Poin transaction not found'
             ], 404);
         }
 
         $poin->delete();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Poin deleted successfully'
+            'status' => true,
+            'message' => 'Poin transaction deleted successfully'
         ], 200);
     }
 
     /**
-     * Get poin by user (Admin/SuperAdmin can view any user)
+     * Approve a poin transaction.
      */
-    public function getByUser($id_user)
+    public function approve($id)
     {
-        $poin = Point::where('id_user', $id_user)->with(['sampah'])->get();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Poin retrieved successfully',
-            'data' => $poin
-        ], 200);
-    }
-
-    /**
-     * Get total poin by user (Admin/SuperAdmin can view any user)
-     */
-    public function getTotalByUser($id_user)
-    {
-        $totalPoin = Point::where('id_user', $id_user)
-                        ->where('status', 'approved')
-                        ->sum('berat');
-
-        $pendingPoin = Point::where('id_user', $id_user)
-                          ->where('status', 'pending')
-                          ->sum('berat');
-
-        $rejectedPoin = Point::where('id_user', $id_user)
-                            ->where('status', 'rejected')
-                            ->sum('berat');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Total poin retrieved successfully',
-            'data' => [
-                'id_user' => $id_user,
-                'total_approved' => $totalPoin,
-                'total_pending' => $pendingPoin,
-                'total_rejected' => $rejectedPoin,
-                'grand_total' => $totalPoin,
-            ]
-        ], 200);
-    }
-
-    /**
-     * Update poin status (approve/reject) - Admin/SuperAdmin only
-     */
-    public function updateStatus(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:approved,rejected',
-            'aksi' => 'nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $poin = Point::find($id);
 
         if (!$poin) {
             return response()->json([
-                'success' => false,
-                'message' => 'Poin not found'
+                'status' => false,
+                'message' => 'Poin transaction not found'
             ], 404);
         }
 
-        $poin->update([
-            'status' => $request->status,
-            'aksi' => $request->aksi ?? ($request->status === 'approved' ? 'Disetujui oleh admin' : 'Ditolak oleh admin')
-        ]);
+        $poin->update(['status' => 'approved']);
+        $poin->load(['user', 'sampah']);
+
+        // Here you can add logic to update user's total points
+        // Example: $user = User::find($poin->id_user);
+        // $user->increment('total_points', $poin->point);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Poin status updated successfully',
+            'status' => true,
+            'message' => 'Poin transaction approved successfully',
             'data' => $poin
         ], 200);
     }
 
     /**
-     * Get current user's poin (for regular users)
+     * Reject a poin transaction.
      */
-    public function getMyPoin(Request $request)
+    public function reject($id)
     {
-        $poin = Point::where('id_user', $request->user()->id_user)
-                    ->with(['sampah'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+        $poin = Point::find($id);
+
+        if (!$poin) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Poin transaction not found'
+            ], 404);
+        }
+
+        $poin->update(['status' => 'rejected']);
+        $poin->load(['user', 'sampah']);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Your poin retrieved successfully',
+            'status' => true,
+            'message' => 'Poin transaction rejected successfully',
             'data' => $poin
         ], 200);
     }
 
     /**
-     * Get current user's total poin (for regular users)
+     * Get statistics for dashboard.
      */
-    public function getMyTotal(Request $request)
+    public function statistics()
     {
-        $userId = $request->user()->id_user;
-        
-        $totalPoin = Point::where('id_user', $userId)
-                        ->where('status', 'approved')
-                        ->sum('berat');
-
-        $pendingPoin = Point::where('id_user', $userId)
-                          ->where('status', 'pending')
-                          ->sum('berat');
-
-        $rejectedPoin = Point::where('id_user', $userId)
-                            ->where('status', 'rejected')
-                            ->sum('berat');
+        $totalTransactions = Point::count();
+        $totalBerat = Point::sum('berat');
+        $totalPoints = Point::sum('point');
+        $pendingCount = Point::where('status', 'pending')->count();
+        $approvedCount = Point::where('status', 'approved')->count();
+        $rejectedCount = Point::where('status', 'rejected')->count();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Your total poin retrieved successfully',
+            'status' => true,
             'data' => [
-                'total_approved' => $totalPoin,
-                'total_pending' => $pendingPoin,
-                'total_rejected' => $rejectedPoin,
-                'grand_total' => $totalPoin,
+                'total_transactions' => $totalTransactions,
+                'total_berat' => $totalBerat,
+                'total_points' => $totalPoints,
+                'pending_count' => $pendingCount,
+                'approved_count' => $approvedCount,
+                'rejected_count' => $rejectedCount,
+                'status_distribution' => [
+                    'pending' => $pendingCount,
+                    'approved' => $approvedCount,
+                    'rejected' => $rejectedCount
+                ]
             ]
         ], 200);
     }

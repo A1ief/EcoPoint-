@@ -17,7 +17,8 @@ return new class extends Migration
             $table->unsignedBigInteger('id_sampah');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->integer('berat');
-            $table->text('aksi')->nullable();
+            $table->text('deskripsi')->nullable();
+            $table->bigInteger('point');
             $table->timestamps();
 
             $table->foreign('id_user')

@@ -22,7 +22,8 @@ class Point extends Model
         'id_sampah',
         'status',
         'berat',
-        'aksi',
+        'deskripsi',
+        'point'
     ];
 
     /**
