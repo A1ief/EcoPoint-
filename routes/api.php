@@ -42,7 +42,7 @@ Route::middleware(['auth:sanctum', 'role:admin,superadmin'])->group(function () 
     Route::get('sampah', [SampahController::class, 'index']);
     Route::post('sampah', [SampahController::class, 'store']);
     Route::get('sampah/{id}', [SampahController::class, 'show']);
-    Route::post('sampah/{id}', [SampahController::class, 'update']);
+    Route::put('sampah/{id}', [SampahController::class, 'update']);
     Route::delete('sampah/{id}', [SampahController::class, 'destroy']);
     Route::get('sampah/user/{id_user}', [SampahController::class, 'getByUser']);
 
