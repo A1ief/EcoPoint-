@@ -18,8 +18,8 @@ class SampahController extends Controller
         $sampah = Sampah::with(['user', 'poin'])->get();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Sampah retrieved successfully',
+            'status' => true,
+            'message' => 'Sampah retrieved status',
             'data' => $sampah
         ], 200);
     }
@@ -39,7 +39,7 @@ class SampahController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
@@ -64,8 +64,8 @@ class SampahController extends Controller
         $sampah = Sampah::create($data);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Sampah submitted successfully',
+            'status' => true,
+            'message' => 'Sampah submitted status',
             'data' => $sampah
         ], 201);
     }
@@ -79,14 +79,14 @@ class SampahController extends Controller
 
         if (!$sampah) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Sampah not found'
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Sampah retrieved successfully',
+            'status' => true,
+            'message' => 'Sampah retrieved status',
             'data' => $sampah
         ], 200);
     }
@@ -100,7 +100,7 @@ class SampahController extends Controller
 
         if (!$sampah) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Sampah not found'
             ], 404);
         }
@@ -108,14 +108,14 @@ class SampahController extends Controller
         $validator = Validator::make($request->all(), [
             'id_user' => 'sometimes|required|exists:tb_user,id_user',
             'kriteria' => 'sometimes|required|string|max:100',
-            'berat' => 'sometimes|required|integer|min:1',
+            'berat' => 'sometimes|required|numeric|min:1',
             'jenis' => 'sometimes|required|string|max:50',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
@@ -139,8 +139,8 @@ class SampahController extends Controller
         $sampah->update($data);
 
         return response()->json([
-            'success' => true,
-            'message' => 'Sampah updated successfully',
+            'status' => true,
+            'message' => 'Sampah updated status',
             'data' => $sampah
         ], 200);
     }
@@ -154,7 +154,7 @@ class SampahController extends Controller
 
         if (!$sampah) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Sampah not found'
             ], 404);
         }
@@ -167,8 +167,8 @@ class SampahController extends Controller
         $sampah->delete();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Sampah deleted successfully'
+            'status' => true,
+            'message' => 'Sampah deleted status'
         ], 200);
     }
 
@@ -180,8 +180,8 @@ class SampahController extends Controller
         $sampah = Sampah::where('id_user', $id_user)->with(['poin'])->get();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Sampah retrieved successfully',
+            'status' => true,
+            'message' => 'Sampah retrieved status',
             'data' => $sampah
         ], 200);
     }
@@ -197,8 +197,8 @@ class SampahController extends Controller
                         ->get();
 
         return response()->json([
-            'success' => true,
-            'message' => 'Your sampah retrieved successfully',
+            'status' => true,
+            'message' => 'Your sampah retrieved status',
             'data' => $sampah
         ], 200);
     }
