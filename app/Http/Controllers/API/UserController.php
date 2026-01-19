@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
@@ -14,12 +13,35 @@ class UserController extends Controller
     /**
      * Display a listing of users.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['sampah', 'poin'])->get();
+        $query = User::query();
+        
+        // Filter by search
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('telepon', 'like', "%{$search}%")
+                  ->orWhere('alamat', 'like', "%{$search}%");
+            });
+        }
+        
+        // Filter by role
+        if ($request->has('role') && $request->role != '') {
+            $query->where('role', $request->role);
+        }
+        
+        // Filter by status
+        if ($request->has('is_active') && $request->is_active !== '') {
+            $query->where('is_active', $request->is_active);
+        }
+        
+        $users = $query->orderBy('created_at', 'desc')->get();
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Users retrieved successfully',
             'data' => $users
         ], 200);
@@ -32,33 +54,44 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:100',
-            'email' => 'required|string|email|max:100|unique:tb_user',
+            'email' => 'required|string|email|max:100|unique:users,email',
             'alamat' => 'required|string',
+            'telepon' => 'nullable|string|max:20',
+            'role' => 'required|string|in:user,admin,superadmin',
+            'is_active' => 'required|boolean',
             'password' => 'required|string|min:6',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        $user = User::create([
-            'nama' => $request->nama,
-            'email' => $request->email,
-            'alamat' => $request->alamat,
-            'password' => Hash::make($request->password),
-            'role' => 'user', // Default role
-            'is_active' => true, // Default active
-        ]);
+        try {
+            $user = User::create([
+                'nama' => $request->nama,
+                'email' => $request->email,
+                'alamat' => $request->alamat,
+                'telepon' => $request->telepon,
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+                'is_active' => $request->is_active,
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User created successfully',
-            'data' => $user
-        ], 201);
+            return response()->json([
+                'status' => true,
+                'message' => 'User created successfully',
+                'data' => $user
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to create user: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -66,17 +99,17 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with(['sampah', 'poin'])->find($id);
+        $user = User::find($id);
 
         if (!$user) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'User not found'
             ], 404);
         }
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'User retrieved successfully',
             'data' => $user
         ], 200);
@@ -91,39 +124,49 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'User not found'
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
             'nama' => 'sometimes|required|string|max:100',
-            'email' => 'sometimes|required|string|email|max:100|unique:tb_user,email,' . $id . ',id_user',
+            'email' => 'sometimes|required|string|email|max:100|unique:users,email,' . $id . ',id_user',
             'alamat' => 'sometimes|required|string',
-            'password' => 'sometimes|required|string|min:6',
+            'telepon' => 'nullable|string|max:20',
+            'role' => 'sometimes|required|string|in:user,admin,superadmin',
+            'is_active' => 'sometimes|required|boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Validation error',
                 'errors' => $validator->errors()
             ], 422);
         }
 
-        $dataToUpdate = $request->only(['nama', 'email', 'alamat']);
-        
-        if ($request->has('password')) {
-            $dataToUpdate['password'] = Hash::make($request->password);
+        try {
+            $dataToUpdate = $request->only(['nama', 'email', 'alamat', 'telepon', 'role', 'is_active']);
+            
+            // Konversi is_active ke boolean
+            if (isset($dataToUpdate['is_active'])) {
+                $dataToUpdate['is_active'] = filter_var($dataToUpdate['is_active'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $user->update($dataToUpdate);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'User updated successfully',
+                'data' => $user->fresh()
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update user: ' . $e->getMessage()
+            ], 500);
         }
-
-        $user->update($dataToUpdate);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User updated successfully',
-            'data' => $user
-        ], 200);
     }
 
     /**
@@ -135,16 +178,66 @@ class UserController extends Controller
 
         if (!$user) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'User not found'
             ], 404);
         }
 
-        $user->delete();
+        try {
+            $user->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User deleted successfully'
-        ], 200);
+            return response()->json([
+                'status' => true,
+                'message' => 'User deleted successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to delete user: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update password for user.
+     */
+    public function updatePassword(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'password' => 'required|string|min:6',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $user->update([
+                'password' => Hash::make($request->password)
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password updated successfully'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update password: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
